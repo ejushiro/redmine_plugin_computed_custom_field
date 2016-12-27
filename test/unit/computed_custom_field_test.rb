@@ -1,7 +1,6 @@
 require File.expand_path('../../test_helper', __FILE__)
 
-class ComputedCustomFieldTest < ActiveSupport::TestCase
-  fixtures :custom_fields
+class ComputedCustomFieldTest < ComputedCustomFieldTestCase
 
   def test_create_issue_computed_custom_field
     field = IssueCustomField.new(:name => 'For Issue',
@@ -38,5 +37,8 @@ class ComputedCustomFieldTest < ActiveSupport::TestCase
     assert field.save
   end
 
+  def test_datetime_output_format
+    field = CustomField.find 111
+  end
   #TODO Version, Group, IssuePriority, DocumentCategory
 end
