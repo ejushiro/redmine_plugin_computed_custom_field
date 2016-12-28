@@ -1,44 +1,52 @@
 require File.expand_path('../../test_helper', __FILE__)
 
 class ComputedCustomFieldTest < ComputedCustomFieldTestCase
-
-  def test_create_issue_computed_custom_field
-    field = IssueCustomField.new(:name => 'For Issue',
-                                 :field_format => 'computed',
-                                 :formula => '"%{cf_1}" == "MySQL" ? "I know that" : ""',)
-    assert field.save
+  def setup
+    @field = IssueCustomField.create!(name: 'For Issue',
+                                      field_format: 'computed',
+                                      is_for_all: true,
+                                      formula: '')
+    @field.trackers = Tracker.all
+    @issue = Issue.find 1
   end
 
-  def test_create_project_computed_custom_field
-    field = ProjectCustomField.new(:name => 'For Project',
-                                 :field_format => 'computed',
-                                 :formula => '"%{cf_3}" * 2',)
-    assert field.save
+  def test_valid_formulas
+    @field.formula = '"%{cf_1}" == "MySQL" ? "This is MySQL" : ""'
+    assert @field.valid?
+    @field.formula = 'custom_field_value(1).present?'
+    assert @field.valid?
+    @field.formula = '%{cf_6}.round(2)'
+    assert @field.valid?
   end
 
-  def test_create_user_computed_custom_field
-    field = UserCustomField.new(:name => 'For User',
-                        :field_format => 'computed',
-                        :formula => '"%{cf_4}" =~ /$\+7[89]/ ? "RU" : "OTHER"',)
-    assert field.save
+  def test_invalid_formula
+    @field.formula = '1/0'
+    exception = assert_raise ActiveRecord::RecordInvalid do
+      @field.save!
+    end
+    assert_match /Formula is invalid/, exception.message
   end
 
-  def test_create_time_entry_custom_field
-    field = TimeEntryCustomField.new(:name => 'For TimeEntry',
-                                :field_format => 'computed',
-                                :formula => '%{cf_10} == "1" ? "You rock!" : ""',)
-    assert field.save
+  def test_bool_computation
+    # cf 6 has float field_format
+    @field.update_attributes(formula: '%{cf_6} > 12', output_format: 'bool')
+    @issue.custom_field_values = { 6 => 12.5 }
+    @issue.save
+    @issue.reload
+    assert_equal '1', @issue.custom_field_value(@field.id)
+
+    @issue.custom_field_values = { 6 => nil }
+    @issue.save!
+    @issue.reload
+    assert_equal '0', @issue.custom_field_value(@field.id)
   end
 
-  def test_create_time_entry_activity_custom_field
-    field = TimeEntryActivityCustomField.new(:name => 'For TimeEntry',
-                                             :field_format => 'computed',
-                                             :formula => '%{cf_7} == "1" ? "Sounds great!" : ":("',)
-    assert field.save
+  def test_string_computation
+    # cf 1 has string field_format
+    @field.update_attribute(:formula, '"%{cf_1}"')
+    @issue.custom_field_values = { 1 => 'MySQL' }
+    @issue.save
+    @issue.reload
+    assert_equal 'MySQL', @issue.custom_field_value(@field.id)
   end
-
-  def test_datetime_output_format
-    field = CustomField.find 111
-  end
-  #TODO Version, Group, IssuePriority, DocumentCategory
 end

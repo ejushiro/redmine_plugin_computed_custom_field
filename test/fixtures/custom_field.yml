@@ -1,9 +1,0 @@
-custom_fields_111:
-  id: 111
-  name: Issue Custom Field 111
-  type: IssueCustomField
-  possible_values: ""
-  field_format: computed
-  position: 111
-  format_store:
-    - formula: 'Date.today + 1.day'
