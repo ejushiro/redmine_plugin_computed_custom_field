@@ -85,8 +85,7 @@ class ModelPatchTest < ComputedCustomFieldTestCase
 
   def test_multiple_user_computation
     field = field_with_user_format
-    formula = '[assigned_to, author_id]'
-    field.update_attributes(formula: formula, multiple: true)
+    field.update_attributes(formula: '[assigned_to, author_id]', multiple: true)
     issue.save
     assert_equal %w(3 2), issue.custom_field_value(field.id)
   end
@@ -106,17 +105,15 @@ class ModelPatchTest < ComputedCustomFieldTestCase
     assert_equal nil, field.formula
     assert field.editable?
     refute field.is_computed?
-
     assert field.is_computed = true
-    assert field.save
 
+    assert field.save
     refute field.editable?
     assert field.is_computed?
     assert_equal '', field.formula
 
     assert field.update_attributes(is_computed: false,
                                    editable: true, formula: nil)
-    field.reload
 
     refute field.editable?
     assert field.is_computed?
